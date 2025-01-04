@@ -9,6 +9,7 @@ use std::{
 
 use auxtools::{raw_types::procs::ProcId, *};
 use detour::RawDetour;
+use bytesize::ByteSize;
 
 static mut THREAD_ID: u32 = 0;
 static MALLOC_SYMBOL: &[u8] = b"malloc\0";
@@ -33,7 +34,7 @@ fn setup_hooks() {
 			THREAD_ID = winapi::um::processthreadsapi::GetCurrentThreadId();
 
 			let mut module = std::ptr::null_mut();
-			let module_path = CString::new("msvcr120.dll").unwrap();
+			let module_path = CString::new("ucrtbase.dll").unwrap();
 			if libloaderapi::GetModuleHandleExA(0, module_path.as_ptr(), &mut module) == 0 {
 				return;
 			}
@@ -45,7 +46,7 @@ fn setup_hooks() {
 			let delete = libloaderapi::GetProcAddress(module, DELETE_SYMBOL.as_ptr() as *const c_char);
 
 			// ¯\_(ツ)_/¯
-			if malloc.is_null() || realloc.is_null() || free.is_null() || new.is_null() || delete.is_null() {
+			if malloc.is_null() || realloc.is_null() || free.is_null() {
 				return;
 			}
 
@@ -65,13 +66,13 @@ fn setup_hooks() {
 				std::mem::forget(hook);
 			}
 
-			{
+			/*{
 				let hook = RawDetour::new(new as _, new_hook as _).unwrap();
 
 				hook.enable().unwrap();
 				NEW_ORIGINAL = Some(std::mem::transmute(hook.trampoline()));
 				std::mem::forget(hook);
-			}
+			}*/
 
 			{
 				let hook = RawDetour::new(free as _, free_hook as _).unwrap();
@@ -81,13 +82,13 @@ fn setup_hooks() {
 				std::mem::forget(hook);
 			}
 
-			{
+			/*{
 				let hook = RawDetour::new(delete as _, delete_hook as _).unwrap();
 
 				hook.enable().unwrap();
 				DELETE_ORIGINAL = Some(std::mem::transmute(hook.trampoline()));
 				std::mem::forget(hook);
-			}
+			}*/
 		}
 	}
 }
@@ -199,6 +200,7 @@ impl State {
 		use std::io::prelude::*;
 
 		let mut totals: Vec<(ProcId, u64)> = vec![];
+        let mut totalsize: u64 = 0;
 
 		for (_ptr, Allocation { proc, size }) in self.live_allocs {
 			let proc_idx = proc.0 as usize;
@@ -214,10 +216,15 @@ impl State {
 		totals.sort_by(|x, y| x.1.cmp(&y.1));
 
 		for (proc, total) in totals {
+            if total == 0 {
+                continue
+            }
+            totalsize += total;
 			if let Some(proc) = Proc::from_id(proc) {
-				writeln!(self.file, "{} = {}", proc.path, total).unwrap();
+				writeln!(self.file, "{} = {}", proc.path, ByteSize(total)).unwrap();
 			}
 		}
+        writeln!(self.file, "Total size: {}", ByteSize(totalsize));
 	}
 
 	fn current_proc_id() -> Option<ProcId> {
