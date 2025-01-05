@@ -34,6 +34,7 @@ fn debugger_shutdown() {
 	unsafe {
 		DEBUG_SERVER.get_mut().take();
 	}
+    mem_profiler::end();
 }
 
 fn get_default_mode() -> String {
@@ -48,6 +49,26 @@ fn get_default_port() -> u16 {
 		Ok(val) => val.parse::<u16>().unwrap_or(server_types::DEFAULT_PORT),
 		Err(_) => server_types::DEFAULT_PORT
 	}
+}
+
+fn get_default_dump() -> String {
+	match std::env::var("AUXTOOLS_DUMP_FILE") {
+		Ok(val) => val,
+		Err(_) => "dump".into()
+	}
+}
+
+#[hook("/proc/enable_mem_profile")]
+fn enable_mem_profile(filename: Value) {
+	let filename = filename.as_string().unwrap_or_else(|_| get_default_dump());
+	mem_profiler::begin(&*filename);
+	Ok(Value::null())
+}
+
+#[hook("/proc/disable_mem_profile")]
+fn disable_mem_profile() {
+	mem_profiler::end();
+	Ok(Value::null())
 }
 
 struct DebugServerInstructionHook<'a> {
@@ -98,6 +119,15 @@ fn enable_debugging(mode: Value, port: Value) {
 
 		INSTRUCTION_HOOKS.get_mut().push(Box::new(debug_server_instruction_hook));
 	}
+
+	let autostart = match std::env::var("AUXTOOLS_AUTOSTART") {
+		Ok(autostart) => {
+			if autostart == "1" {
+				mem_profiler::begin(&get_default_dump());
+			}
+		},
+		Err(e) => return Ok(Value::null())
+	};
 
 	Ok(Value::null())
 }
