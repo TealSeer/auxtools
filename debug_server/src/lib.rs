@@ -62,13 +62,13 @@ fn get_default_dump() -> String {
 fn enable_mem_profile(filename: Value) {
 	let filename = filename.as_string().unwrap_or_else(|_| get_default_dump());
 	mem_profiler::begin(&*filename);
-	Ok(Value::null())
+	Ok(Value::NULL)
 }
 
 #[hook("/proc/disable_mem_profile")]
 fn disable_mem_profile() {
 	mem_profiler::end();
-	Ok(Value::null())
+	Ok(Value::NULL)
 }
 
 struct DebugServerInstructionHook<'a> {
@@ -126,7 +126,7 @@ fn enable_debugging(mode: Value, port: Value) {
 				mem_profiler::begin(&get_default_dump());
 			}
 		},
-		Err(e) => return Ok(Value::null())
+		Err(e) => return Ok(Value::NULL)
 	};
 
 	Ok(Value::NULL)
