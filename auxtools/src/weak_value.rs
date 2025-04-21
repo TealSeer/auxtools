@@ -44,7 +44,7 @@ fn get_next_id() -> f32 {
 ///
 /// let weakref = callbacks.get(some_id);
 /// if let Some(thing) = weakref.upgrade() {
-/// 		thing.call("callback", &[])?;
+///     thing.call("callback", &[])?;
 /// }
 /// ```
 #[derive(Copy, Clone)]
@@ -83,7 +83,7 @@ impl WeakValue {
 	pub fn upgrade_or_null(&self) -> Value {
 		match self.upgrade() {
 			Some(v) => v,
-			None => Value::null()
+			None => Value::NULL
 		}
 	}
 }

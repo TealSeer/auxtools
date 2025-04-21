@@ -52,7 +52,7 @@ impl StringRef {
 		}
 	}
 
-	pub fn get_id(&self) -> raw_types::strings::StringId {
+	pub const fn get_id(&self) -> raw_types::strings::StringId {
 		unsafe { self.value.raw.data.string }
 	}
 
@@ -82,14 +82,9 @@ impl fmt::Debug for StringRef {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut format = vec![];
 
-		let mut iter = self.data().into_iter();
+		let mut iter = self.data().iter();
 
-		loop {
-			let byte = match iter.next() {
-				Some(x) => *x,
-				None => break
-			};
-
+		while let Some(&byte) = iter.next() {
 			if byte == 0xFF {
 				// NOTE: Doesn't hold state for formatting, so some strings relying on are a
 				// little off

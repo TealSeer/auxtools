@@ -81,14 +81,14 @@ impl Proc {
 	pub fn parameter_names(&self) -> Vec<StringRef> {
 		unsafe {
 			let (data, count) = raw_types::misc::get_parameters((*self.entry).metadata.get_parameters());
-			(0..count).map(|i| StringRef::from_variable_id((*data.add(i as usize)).name)).collect()
+			(0..count).map(|i| StringRef::from_variable_id((*data.add(i)).name)).collect()
 		}
 	}
 
 	pub fn local_names(&self) -> Vec<StringRef> {
 		unsafe {
 			let (names, count) = raw_types::misc::get_locals((*self.entry).metadata.get_locals());
-			(0..count).map(|i| StringRef::from_variable_id(*names.add(i as usize))).collect()
+			(0..count).map(|i| StringRef::from_variable_id(*names.add(i))).collect()
 		}
 	}
 
@@ -131,19 +131,7 @@ impl Proc {
 
 			let args: Vec<_> = args.iter().map(|e| e.raw).collect();
 
-			if raw_types::funcs::call_proc_by_id(
-				&mut ret,
-				Value::null().raw,
-				0,
-				self.id,
-				0,
-				Value::null().raw,
-				args.as_ptr(),
-				args.len(),
-				0,
-				0
-			) == 1
-			{
+			if raw_types::funcs::call_proc_by_id(&mut ret, Value::NULL.raw, 0, self.id, 0, Value::NULL.raw, args.as_ptr(), args.len(), 0, 0) == 1 {
 				return Ok(Value::from_raw_owned(ret));
 			}
 		}
@@ -211,10 +199,7 @@ pub fn clear_procs() {
 
 pub fn get_proc_override<S: Into<String>>(path: S, override_id: u32) -> Option<Proc> {
 	let s = strip_path(path.into());
-	PROCS_BY_NAME.with(|h| match h.borrow().get(&s)?.get(override_id as usize) {
-		Some(p) => Some(p.clone()),
-		None => None
-	})
+	PROCS_BY_NAME.with(|h| h.borrow().get(&s)?.get(override_id as usize).cloned())
 }
 
 /// Retrieves the 0th override of a proc.

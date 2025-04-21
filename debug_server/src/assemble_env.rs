@@ -1,5 +1,4 @@
 use auxtools::*;
-use dmasm;
 
 pub struct AssembleEnv;
 
@@ -47,7 +46,7 @@ impl dmasm::assembler::AssembleEnv for AssembleEnv {
 
 		let res = proc.call(&[&path]).unwrap().as_list().unwrap().get(1).unwrap();
 
-		if res == Value::null() {
+		if res == Value::NULL {
 			return None;
 		}
 

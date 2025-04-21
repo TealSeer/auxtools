@@ -1,5 +1,3 @@
-#![warn(clippy::complexity, clippy::correctness, clippy::perf, clippy::style)]
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, spanned::Spanned, Lit};
@@ -187,7 +185,7 @@ pub fn pin_dll(attr: TokenStream) -> TokenStream {
 ///     if let Some(num) = num.as_number() {
 ///         Value::from(num * 2.0);
 ///     }
-///     Value::null()
+///     Value::NULL
 /// }
 /// ```
 ///
@@ -198,10 +196,9 @@ pub fn pin_dll(attr: TokenStream) -> TokenStream {
 /// fn on_honked(honker: Value) {
 ///     src.call("gib", &[]);
 ///     honker.call("laugh", &[]);
-///     Value::null()
+///     Value::NULL
 /// }
 /// ```
-
 #[proc_macro_attribute]
 pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
 	let input = syn::parse_macro_input!(item as syn::ItemFn);
@@ -251,24 +248,21 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
 		if let syn::Pat::Ident(p) = &*arg.pat {
 			arg_names.push(p.ident.clone());
 			let index = arg_names.len() - 1;
-			proc_arg_unpacker.push(
-				(quote! {
-					&args[#index]
-				})
-				.into()
-			);
+			proc_arg_unpacker.push(quote! {
+				&args[#index]
+			});
 		}
 	}
 	let _default_null = quote! {
 		#[allow(unreachable_code)]
-		auxtools::Value::null()
+		auxtools::Value::NULL
 	};
 	let result = quote! {
 		#cthook_prelude
 		#signature {
 			if #args_len > args.len() {
 				for i in 0..#args_len - args.len() {
-					args.push(auxtools::Value::null())
+					args.push(auxtools::Value::NULL)
 				}
 			}
 			let (#arg_names) = (#proc_arg_unpacker);

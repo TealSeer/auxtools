@@ -92,7 +92,7 @@ fn enable_debugging(mode: Value, port: Value) {
 
 	let server = match mode.as_str() {
 		"NONE" => {
-			return Ok(Value::null());
+			return Ok(Value::NULL);
 		}
 
 		"LAUNCHED" => server::Server::connect(&addr).map_err(|e| runtime!("Couldn't create debug server: {}", e))?,
@@ -129,5 +129,5 @@ fn enable_debugging(mode: Value, port: Value) {
 		Err(e) => return Ok(Value::null())
 	};
 
-	Ok(Value::null())
+	Ok(Value::NULL)
 }
